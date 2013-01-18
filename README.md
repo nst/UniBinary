@@ -40,7 +40,7 @@ Inline string decoding:
 
     $ python unibinary.py -s "嫯壭巠唀一七一一丠一一倀一予一一丐一一伀一丸一一劆卬哆崠啶嵲哆刊丏巿巰一一一伀一Ѐ丄僠一一嗿巿崅巿巿Ѐ丄ӿ丄乐一丅一一丁一一伀一丏崀巿嵪仆嘤一一咠侰么凬乌宀嘼刐咠仫伟崀一一ӿ丅丏巿咀一下丁嘾娄嫘仿ӿ丄一仿巰一ӿӿ" > micro_macho
     $ chmod +x micro_macho
-    $ ./m
+    $ ./micro_macho
     Hello world
 
 ### Format Description
