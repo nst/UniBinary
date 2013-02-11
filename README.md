@@ -1,6 +1,6 @@
 # UniBinary
 
-_A data-to-unicode encoding format. Think "Base64 for Unicode", with RLE compression._
+_A data-to-unicode encoding format. Think "Base64 for Unicode" with RLE compression._
 
 ### What is UniBinary
 
