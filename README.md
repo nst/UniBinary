@@ -1,20 +1,26 @@
 # UniBinary
 
-_A binary-to-text encoding format. Encodes 3 bytes in 2 Unicode character. Think "Base64 for Unicode" with RLE compression._
+_A data-to-unicode encoding format. Think "Base64 for Unicode", with RLE compression._
 
 ### What is UniBinary
 
-UniBinary is an encoding format to encode binary data into Unicode text.
+UniBinary is an encoding format to encode data into Unicode text.
 
-UniBinary stores 3 bytes in 2 Unicode characters, where Base64 uses 4 ASCII characters.
+UniBinary stores:
 
-UniBinary uses displayable Unicode characters that you can copy / paste.
+    - 2 ASCII 128 characters into 1 Unicode character
+    - 3 arbitrary bytes into 1 Unicode character
+
+whereas Base64 stores 3 bytes into 4 ASCII characters.
 
             | UniBinary (Unicode) | Base64 (ASCII)
     --------+---------------------+----------------
      6 bits |                     | 1 character
     12 bits | 1 character         | 
+    2 ASCII | 1 character         |
     3 bytes | 2 character         | 4 characters
+
+As Base64, UniBinary uses only displayable characters that you can copy / paste.
 
 ### Usage
 
@@ -36,38 +42,43 @@ It works!
     $ /tmp/date
     Thu Jan 17 18:02:24 CET 2013
 
+Inline string encoding:
+
+    $ python unibinary.py -es "test"
+    鬥髴
+
 Inline string decoding:
 
-    $ python unibinary.py -s "嫯壭巠唀一七一一丠一一倀一予一一丐一一伀一丸一一劆卬哆崠啶嵲哆刊丏巿巰一一一伀一Ѐ丄僠一一嗿巿崅巿巿Ѐ丄ӿ丄乐一丅一一丁一一伀一丏崀巿嵪仆嘤一一咠侰么凬乌宀嘼刐咠仫伟崀一一ӿ丅丏巿咀一下丁嘾娄嫘仿ӿ丄一仿巰一ӿӿ" > micro_macho
+    $ python unibinary.py -ds "嫯壭巠唀帀廀帀庀帀庀帀嚀一币帀币帀常帀済靬餯瘷駲餤悀巿巿Ѐ丅戀Ѐ丅榀帀乿巿巰叿巿崀帀丏巿巿崅帀渐帀币帀帐帀丏崀巿嵪焨最帀袁夀劃峀勍嘈凄爪与夑巰一帀ӿ丅丏巿蠀帀夀侃峀勍嘏巿巿巿帀巿崀丏巿" > micro_macho
     $ chmod +x micro_macho
     $ ./micro_macho
     Hello world
 
 ### Format Description
 
-#### 1. Storing Data into Unicode
+#### 1. Storing Arbitrary Bytes into Unicode
 
-UniBinary uses two ranges of Unicode characters, `U8` and `U12`.
+UniBinary stores arbitrary data into two ranges of Unicode characters, `U8` and `U12b`.
 
-A character in `U8` stores a 8-bits value, a character in `U12` stores a 12-bits value.
+A character in `U8` stores a 8-bits value, a character in `U12b` stores a 12-bits value.
 
     u8_offset = \u0400
     u8_length = 0x100
     
-    u12_offset = \u4E00
-    u12_length = 0x1000    
+    u12b_offset = \u4E00
+    u12b_length = 0x1000    
 
-    U8  = [  u8_offset, ...,  u8_offset  + u8_length [
-    U12 = [ u12_offset, ..., u12_offset + u12_length [
+    U8   = [   u8_offset, ...,   u8_offset + u8_length   [
+    U12b = [ u12b_offset, ..., u12b_offset + u12b_length [
 
 `U8` is actually the "Cyrillic" block, while `U12` is a subset of the "CJK Unified Ideographs" block.
 
-Characters in `U8` can encode any 8-bits value by adding that value to the range starting offset. It goes the same with `U12`.
+Characters in `U8` can encode any 8-bits value by adding that value to the range starting offset. It goes the same with `U12b`.
 
     0xAB  (8 bits)  gets encoded as \u0400 + 0xAB  = \u04AB = ҫ
     0xABC (12 bits) gets encoded as \u4E00 + 0xABC = \u58BC = 뱘
 
-#### 2. Mapping Bytes to Unichars
+#### 2. Mapping Bytes into Unicode
 
 UniBinary reads three bytes to yield two Unicode characters in the `U12` range .
 
@@ -82,7 +93,7 @@ Here is how UniBinary encode the 24 bits value `0xABCDEF` into two Unicode chara
     \u4E00+0xABC \u4E00+0xDEF        |          42     60     55     47
           墼           寯             |          q      8      3      v
 
-At the end of the file, if less than three bytes are available, UniBinary reads bytes one by one to yield Unicode characters in `U8`.
+If less than three bytes are available, UniBinary reads bytes one by one to yield Unicode characters in `U8`.
 
     A   B   
     10101011
@@ -93,25 +104,37 @@ At the end of the file, if less than three bytes are available, UniBinary reads 
 
 UniBinary also takes advantage of repetitions to spare bytes. A byte `B` repeated more that 3 times gets encoded as `u8 u12` where `u8` stores `B` and `u12` stores the number of times that `B` is repeated.
 
+#### 2. Storing two ASCII 7-bits characters into one Unicode character
+
+When UniBinary meets 2 ASCII 7-bits characters `a1` and 'a2`, it encodes them into one single Unicode character. This character is chosen out of four possible ranges, depending on the value of the ASCII characters:
+
+    U12a_0_0    [ 0x5E00, ..., 0x5E00 + 0xFFF [     for a1 <  64 and a2 <  64
+    U12a_0_1    [ 0x6E00, ..., 0x6E00 + 0xFFF [     for a1 <  64 and a2 >= 64
+    U12a_1_0    [ 0x7E00, ..., 0x7E00 + 0xFFF [     for a1 >= 64 and a2 <  64
+    U12a_1_1    [ 0x8E00, ..., 0x8E00 + 0xFFF [     for a1 >= 64 and a2 >= 64
+
+So, we can pack 2 * 6 bits in a U12a Unicode character. We use four different ranges to replace the 7th missing bit. We use `U12a_1_0` and `U12a_1_0` to add 64 to `a1`, and `U12a_0_1` and `U12a_1_1` to add 64 to `a2`. As a result, we can store two ASCII 7-bits characters in a Unicode character.
+
 #### 3. Format Summary
     
-    - u8  u12    ->    bytes B (u8) repeated N times (u12) | N in [3, 0xFFF]
-    - u12 u12    ->    24 bits (3 bytes)
-    - u8         ->    8 bits (1 byte)
+    - u8   u12b ->  bytes B (u8) repeated N times (u12) | N in [3, 0xFFF]
+    - u12a      ->  12 bits (2 ASCII characters)
+    - u12b u12b ->  24 bits (3 bytes)
+    - u8        ->  8 bits (1 byte)
 
 UniBinary encoded data can be described with the following regular expression:
 
-    ( (u12 u12) | (u8 u12) )* u8 {0,2}
+    ( u12a | (u12 u12) | (u8 u12) )* u8 {0,2}
 
 #### 4. Examples
 
     0x12 0x34           -> encode 0x12 into u8, encode 0x34 into u8
-    0xAB 0xCD 0xEF      -> encode 0xABC into u12, encode 0xDEF into u12
-    0xFF 0xFF 0xFF 0xFF -> encode 0xFF into u8, encode 0x4 into u12
+    0xAB 0xCD 0xEF      -> encode 0xABC into u12b, encode 0xDEF into u12b
+    0xFF 0xFF 0xFF 0xFF -> encode 0xFF into u8, encode 0x4 into u12b
 
-    AB CD EF FF FF FF FF 00 -> U12(0xABC), U12(0xDEF), U8(0xFF), U12(4), U8(00) -> "墼寯ᇿ丄ᄀ"
+    AB CD EF FF FF FF FF 00 -> U12(0xABC), U12(0xDEF), U8(4), U12(0xFF), U8(00) -> "墼寯巿巿Ѐ"
 
-    13808 bytes /usr/bin/true -> 1913 Unicode characters, 7654 bytes UTF-16 files including BOM
+    13808 bytes /usr/bin/true -> 3253 Unicode characters, 9667 bytes UTF-16 files including BOM
 
 #### 5. Encoded Text Size
 
@@ -123,54 +146,19 @@ The worst case of encoding `N` bytes is `(N * 2 / 3 + 2)` Unicode characters.
 
 Hence, UniBinary can pack at least 209 bytes in the 140 characters of a Twitter message.
 
+In case of a text only made out of ASCII 7-bits characters, UniBinary will handle repeats as usual, but will also store two ASCII characters into a single Unicode character. Hence a `N` bytes ASCII text will get  compressed into `N / 2 + 1` Unicode characters.
+
 ### Encoding Algorithm
 
-First look for repetitions (but no more that 0xFFF). If no repeat, then try to consume three bytes. If less than three bytes available, encode one byte at a time.
+First look for repetitions (but no more that 0xFFF). If no repeat, then try to consume two ASCII chars. If it's not possible, look for three bytes. If less than three bytes are available, encode one byte at a time.
 
     1. byte B repeated N times | N > 3    ->    U8(B), U12(N)
-    2. bytes B1, B2, B3                   ->    U12(B1 << 4 + B2 >> 4), U12(((B2 & 0xF) << 8) + B3)
-    3. byte B                             ->    U8(B)
-
-The encoding algorithm is as follows:
-
-    - if first byte available repeats more than R = 3 times:
-       - write (u8, u12) where:
-         u8 = u8_start_offset + the byte to repeat
-         u12 = u12_start_offset + max(R, u12_length - 1)
-    - else if at least 3 bytes available:
-       - read three bytes b1, b2, b3
-       - write (u12_1, u12_2) where:
-         u12_1 = u12_start_offset + (b1 << 4) + (b2 >> 4)
-         u12_2 = u12_start_offset + ((b2 & 0x0F) << 8) + b3
-    - else if at least 1 byte available:
-       - read one byte b1
-       - write (u8) where:
-         u8 = u8_start_offset + b1
+    2. ASCII characters A1, A2            ->    U12a(A1, A2)
+    3. bytes B1, B2, B3                   ->    U12b(B1 << 4 + B2 >> 4), U12b(((B2 & 0xF) << 8) + B3)
+    4. byte B                             ->    U8(B)
 
 ### Decoding Algorithm
 
-Read 2 Unicode chars if you can. It will be either `U12, U12` encoding 3 bytes, `U8, U8` encoding 2 bytes or `U8, U12` encoding the repeat of a byte. If only 1 unichar remains, it is in U8.
+Reading all the unichars, extract two ASCII characters out of `U12a`, or three bytes out of `(U12b, U12b)`, or one bytes out of `U8`.
 
-    - if at least 2 unichars available:
-        - read two unichars u1 and u2
-        - if u1 and u2 are both in U12
-            - write (b1, b2, b3) where;
-              i1 = u1 - u12_start_offset
-              i2 = u2 - u12_start_offset
-              b1 = i1 >> 4
-              b2 = ((i1 & 0xF) << 4) + ((i2 & 0xF00) >> 8)
-              b3 = i2 & 0x0FF
-        - else if u1 and u2 are both in U8
-            - write (b1, b2) where:
-              b1 = u1 - u8_start_offset
-              b2 = u2 - u8_start_offset
-        - else if u1 in U8 and u2 in U12:
-            - write byte b * n times, where
-              b = u1 - u8_start_offset
-              n = u2 - u12_start_offset
-        - else:
-            format error
-    - else if at least 1 unichar available:
-        - read 1 unichar u1
-        - write b, where:
-          b = u1 - u8_start_offset
+Please see to the source code for implementation details.
