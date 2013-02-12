@@ -6,12 +6,9 @@ _A data-to-unicode encoding format. Think "Base64 for Unicode" with RLE compress
 
 UniBinary is an encoding format that maps data to Unicode characters.
 
-UniBinary stores:
+UniBinary stores 3 arbitrary bytes or 4 ASCII 7-bits characters into 2 Unicode characters.
 
-    - 2 ASCII-7 bits characters into 1 Unicode character
-    - 3 arbitrary bytes into 2 Unicode characters
-
-whereas Base64 stores 3 bytes into 4 ASCII characters.
+You can compare UniBinary with Base64, which stores 3 bytes into 4 ASCII characters:
 
             | UniBinary (Unicode) | Base64 (ASCII)
     --------+---------------------+----------------
