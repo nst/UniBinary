@@ -353,12 +353,9 @@ if __name__ == '__main__':
         UTF8Writer = codecs.getwriter('utf-8')
         sys.stdout = UTF8Writer(sys.stdout)
         
-        length = 0
         for unichars in gen_encode_unichars_from_bytes(bytes):
             string = unicode(''.join(unichars))
-            sys.stdout.write(string)
-            length += len(string)
-        
+            sys.stdout.write(string)        
     elif args['decode']:
         f = codecs.open(args['decode'], "r", encoding='utf-8')
         s = f.read()
