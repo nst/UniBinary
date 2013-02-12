@@ -359,8 +359,6 @@ if __name__ == '__main__':
             sys.stdout.write(string)
             length += len(string)
         
-        print "--", length
-        
     elif args['decode']:
         f = codecs.open(args['decode'], "r", encoding='utf-8')
         s = f.read()
