@@ -9,7 +9,7 @@ UniBinary is an encoding format that maps data to Unicode characters.
 UniBinary stores:
 
     - 2 ASCII-7 bits characters into 1 Unicode character
-    - 3 arbitrary bytes into 1 Unicode character
+    - 3 arbitrary bytes into 2 Unicode characters
 
 whereas Base64 stores 3 bytes into 4 ASCII characters.
 
