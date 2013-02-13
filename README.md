@@ -113,7 +113,7 @@ So, we can pack 2 * 6 bits in a `U12a` Unicode character. We use four different 
 
 #### 3. Run Length Encoding 
 
-UniBinary also takes advantage of repetitions to spare bytes. A byte `B` repeated more that 3 times gets encoded as `(u8, u12)` where `u8` stores `B` and `u12` stores the number of times that `B` is repeated un the `U12b` range.
+UniBinary also takes advantage of repetitions to spare bytes. A byte `B` repeated more that 3 times gets encoded as `(u8, u12)` where `u8` stores `B` and `u12` stores the number of times that `B` is repeated in the `U12b` range.
 
 #### 4. Format Summary
     
@@ -148,7 +148,7 @@ In case of a text only made out of `N` ASCII 7-bits characters, the worst case i
 
 ### Encoding Algorithm
 
-First look for repetitions (no more that 0xFFF at a time). If no repeat, then try to consume two ASCII chars. If it's not possible, look for three bytes. If less than three bytes are available, encode one byte at a time.
+First look for repetitions (no more than 0xFFF at a time). If no repeat, then try to consume two ASCII chars. If it's not possible, look for three bytes. If less than three bytes are available, encode one byte at a time.
 
     1. byte B repeated N times | N > 3    ->    U8(B), U12(N)
     2. ASCII characters A1, A2            ->    U12a(A1, A2)
