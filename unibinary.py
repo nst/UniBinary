@@ -263,8 +263,9 @@ def gen_encode_unichars_from_bytes(bytes):
         if r > 3: # because 3 bytes get encoded as 2 unichars anyway
             # read N bytes | N > 3 and N < 0x1000, encode as 2 unichar
 
-            r = r % 0x1000
-            
+            if r >= 0x1000:
+                r = 0xFFF
+                        
             length = r
             (uni_b, uni_n) = two_unichr_to_repeat_byte_ntimes(ord(bytes[i]), r)
             i += length

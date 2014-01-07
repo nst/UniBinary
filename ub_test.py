@@ -49,6 +49,18 @@ class TestUnidata(unittest.TestCase):
         self.assertEqual(a, 0x12, "0x%x" % a)
         self.assertEqual(b, 0x34, "0x%x" % b)
         self.assertEqual(c, 0x56, "0x%x" % c)
+
+    def test_encode_3_bytes(self):
+        bytes = "\xab\xcd\xef"
+        
+        gen = gen_encode_unichars_from_bytes(bytes)
+        
+        (u1, u2) = gen.next()
+        
+        self.assertFalse(list(gen))        
+
+        self.assertEqual(u1, unichr(U12b_start + 0xABC))
+        self.assertEqual(u2, unichr(U12b_start + 0xDEF))
     
     def test_encode_bytes(self):
         bytes = "\xab\xcd\xef\xff"
@@ -56,7 +68,9 @@ class TestUnidata(unittest.TestCase):
         gen = gen_encode_unichars_from_bytes(bytes)
         
         (u1, u2) = gen.next()
-        (u3) = gen.next()
+        u3 = gen.next()
+        
+        self.assertFalse(list(gen))        
         
         self.assertEqual(u1, unichr(U12b_start + 0xABC))
         self.assertEqual(u2, unichr(U12b_start + 0xDEF))
@@ -75,6 +89,8 @@ class TestUnidata(unittest.TestCase):
                
         (a,b,c) = gen.next()
         
+        self.assertFalse(list(gen))        
+
         self.assertEqual(a, 0xAB)
         self.assertEqual(b, 0xCD)
         self.assertEqual(c, 0xEF)
@@ -145,6 +161,8 @@ class TestUnidata(unittest.TestCase):
         u0 = gen.next()
         u1 = gen.next()
         
+        self.assertFalse(list(gen))        
+
         self.assertEqual(u0, u"\u9662")
         self.assertEqual(u1, u"\u0463")
 
@@ -156,8 +174,36 @@ class TestUnidata(unittest.TestCase):
         
         u0 = gen.next()
         
+        self.assertFalse(list(gen))        
+
         self.assertEqual(u0, unichr_12a_from_two_ascii('Z', 'E'))
+
+    def test_two_unichr_to_repeat_byte_ntimes_aaa(self):
+        (uni_b, uni_r) = two_unichr_to_repeat_byte_ntimes(ord('a'), 10)
+                
+        self.assertEqual(ord(uni_b), 0x0461)
+        self.assertEqual(ord(uni_r), 0x4E0A)
+
+    def test_two_unichr_to_repeat_byte_ntimes_xxx(self):
+        (uni_b, uni_r) = two_unichr_to_repeat_byte_ntimes(ord('x'), 3)
+        
+        self.assertEqual(ord(uni_b), 0x0478)
+        self.assertEqual(ord(uni_r), 0x4E03)
     
+    def test_repeat(self):
+    
+        s = "xxx"
+        
+        gen = gen_encode_unichars_from_bytes(s)
+        
+        u0 = gen.next()
+        u1 = gen.next()
+        
+        self.assertFalse(list(gen))        
+
+        self.assertEqual(ord(u0), 0x9C38)
+        self.assertEqual(ord(u1), 0x0478)
+        
     def test_ascii_characters_decoding(self):
     
         s = [u"\u9662", u"\u0463"]
@@ -191,6 +237,8 @@ class TestUnidata(unittest.TestCase):
         (u3) = gen.next()
         (u4) = gen.next()
         
+        self.assertFalse(list(gen))        
+
         self.assertEqual(u1, unichr(U12b_start + 0xABC))
         self.assertEqual(u2, unichr(U12b_start + 0xDEF))
         self.assertEqual(u3, unichr_08_from_int(0xAB))
@@ -207,6 +255,8 @@ class TestUnidata(unittest.TestCase):
         (u4) = gen.next()
         (u5) = gen.next()
         
+        self.assertFalse(list(gen))        
+
         self.assertEqual(u1, unichr(U12b_start + 0xABC))
         self.assertEqual(u2, unichr(U12b_start + 0xDEF))
         self.assertEqual(u3, unichr_12a_from_two_ascii('a', 'b'))
@@ -233,8 +283,10 @@ class TestUnidata(unittest.TestCase):
         (a,b,c) = gen.next()
         (d,e) = gen.next()
         (f,g) = gen.next()
-        (h) = gen.next()
-                
+        h = gen.next()
+             
+        self.assertFalse(list(gen))        
+   
         self.assertEqual(a, 0xAB)
         self.assertEqual(b, 0xCD)
         self.assertEqual(c, 0xEF)
@@ -255,8 +307,52 @@ class TestUnidata(unittest.TestCase):
         
         (u1, u2) = gen.next()
         (u3, u4) = gen.next()
-        (u5) = gen.next()
+        u5 = gen.next()
+
+        self.assertFalse(list(gen))        
+        
+        self.assertEqual(ord(u1), 0x58BC)
+        self.assertEqual(ord(u2), 0x5bEF)
+        self.assertEqual(ord(u3), 0x04FF)
+        self.assertEqual(ord(u4), 0x4E04)
+        self.assertEqual(ord(u5), 0x0400)
+         
+    def test_big_repeats_2000_minus_2(self):
+
+        bytes = ["\xAA"] * (0x2000 - 2)
+        
+        gen = gen_encode_unichars_from_bytes(bytes)
+        
+        (u1, u2) = gen.next()
+        (u3, u4) = gen.next()
+        
+        self.assertFalse(list(gen))        
+
+        self.assertEqual(ord(u1), 0x04AA)
+        self.assertEqual(ord(u2), 0x5DFF)
+        self.assertEqual(ord(u3), 0x04AA)
+        self.assertEqual(ord(u4), 0x5DFF)
+        
+    def test_big_repeats_2000(self):
     
+        bytes = ["\xAA"] * 0x2000
+        
+        gen = gen_encode_unichars_from_bytes(bytes)
+        
+        (u1, u2) = gen.next()
+        (u3, u4) = gen.next()
+        u5 = gen.next()
+        u6 = gen.next()
+
+        self.assertFalse(list(gen))        
+
+        self.assertEqual(ord(u1), 0x04AA)
+        self.assertEqual(ord(u2), 0x5DFF)
+        self.assertEqual(ord(u3), 0x04AA)
+        self.assertEqual(ord(u4), 0x5DFF)
+        self.assertEqual(ord(u5), 0x04AA)
+        self.assertEqual(ord(u6), 0x04AA)
+
     def test_ascii_text_encoding_decoding(self):
     
         s = "if I'd listened everything that they said to me, took the time to bleed from all the tiny little arrows shot my way, I wouldn't be here! the ones who don't do anything are always the ones who try to put you down. I'm talking to you: hero time starts right now! time to shine!"
