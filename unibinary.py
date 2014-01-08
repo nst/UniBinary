@@ -324,6 +324,11 @@ def gen_decode_bytes_from_string(s):
             b = int_from_u08b(s[i])
             i += 1
             yield tuple([b])
+        elif i == len(s) - 1 and s[i] == '\n':
+            # don't decode trailing new line
+            c = s[i]
+            i += 1
+            yield tuple([ord(c)])
         else:
             print "-- cannot decode", s
             sys.exit(1)
@@ -369,7 +374,7 @@ if __name__ == '__main__':
 
         for unichars in gen_encode_unichars_from_bytes(args['encode_string']):
             string = unicode(''.join(unichars))
-            sys.stdout.write(string)            
+            sys.stdout.write(string)
         print ""
     elif args['decode_string']:
         print_decoded_string(args['decode_string'].decode('utf-8'))
