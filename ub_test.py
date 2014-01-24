@@ -316,7 +316,25 @@ class TestUnidata(unittest.TestCase):
         self.assertEqual(ord(u3), 0x04FF)
         self.assertEqual(ord(u4), 0x4E04)
         self.assertEqual(ord(u5), 0x0400)
-         
+    
+    def test_encode_macho_header(self):
+    
+        bytes = "\xCF\xFA\xED\xFE\x07\x00\x00\x01"
+        
+        gen = gen_encode_unichars_from_bytes(bytes)
+        
+        (u1, u2) = gen.next()
+        (u3, u4) = gen.next()
+        u5 = gen.next()
+
+        self.assertFalse(list(gen))        
+        
+        self.assertEqual(ord(u1), 0x5AFF)
+        self.assertEqual(ord(u2), 0x58ED)
+        self.assertEqual(ord(u3), 0x5DE0)
+        self.assertEqual(ord(u4), 0x5500)
+        self.assertEqual(ord(u5), 0x5E01)
+    
     def test_big_repeats_2000_minus_2(self):
 
         bytes = ["\xAA"] * (0x2000 - 2)
