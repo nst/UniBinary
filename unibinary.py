@@ -324,6 +324,9 @@ def gen_decode_bytes_from_string(s):
             b = int_from_u08b(s[i])
             i += 1
             yield tuple([b])
+        elif s[i] == '\n' and i+1 == len(s):
+            # ignore trailing newline
+            i += 1
         else:
             print "-- cannot decode", s
             sys.exit(1)
