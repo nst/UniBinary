@@ -4,10 +4,11 @@
 """
 UniBinary, or "Base64 for Unicode".
 
-Encodes and decodes data into Unichode characters.
+Encodes and decodes data into printable Unichode characters.
 
 2 ASCII characters -> 1 unicode character
 3 arbitrary bytes  -> 2 unicode characters
+[3, 0xFFF] repeats -> 2 unicode characters
 
 The encoded text can be copied / pasted / posted on Twitter and stored as UTF-8 or UTF-16 text files.
 
@@ -260,8 +261,8 @@ def gen_encode_unichars_from_bytes(bytes):
     while (i < len(bytes)):
         r = number_of_left_instances_from_index(bytes, i)
         
-        if r > 3: # because 3 bytes get encoded as 2 unichars anyway
-            # read N bytes | N > 3 and N < 0x1000, encode as 2 unichar
+        if r >= 3:
+            # read N bytes | N >= 3 and N < 0x1000, encode as 2 unichar
 
             if r >= 0x1000:
                 r = 0xFFF
@@ -306,6 +307,10 @@ def gen_decode_bytes_from_string(s):
         
     while (i < len(s)):
         
+        if s[i] == '\n':
+            i += 1
+            continue
+        
         if is_in_U12a(s[i]):
             # 1 U12a -> read 2 ascii characters
             bytes = two_bytes_from_u12a(s[i])
@@ -315,8 +320,15 @@ def gen_decode_bytes_from_string(s):
             # (U12b, U12b) -> read 3 bytes
             # (U8b, U12b) -> read repetition
             # (U8b, U8b) -> read 1 byte, 1 byte
-            u1, u2 = s[i:i+2]
-            i += 2
+            u1 = s[i]
+            i += 1
+            
+            while s[i] == '\n':
+                i += 1
+            
+            u2 = s[i]
+            i += 1
+            
             bytes = bytes_from_u1_u2(u1, u2)
             yield bytes
         elif is_in_U8b(s[i]):
@@ -324,9 +336,6 @@ def gen_decode_bytes_from_string(s):
             b = int_from_u08b(s[i])
             i += 1
             yield tuple([b])
-        elif s[i] == '\n' and i+1 == len(s):
-            # ignore trailing newline
-            i += 1
         else:
             print "-- cannot decode", s
             sys.exit(1)
@@ -342,7 +351,7 @@ def print_decoded_string(s):
 
 if __name__ == '__main__':
     
-    parser = argparse.ArgumentParser(description='UniBinary encodes and decodes data into Unicode characters.')
+    parser = argparse.ArgumentParser(description='UniBinary encodes and decodes data into printable Unicode characters.')
     parser.add_argument('-e','--encode', help='utf-8 file to encode')
     parser.add_argument('-d','--decode', help='utf-8 file to decode')
     parser.add_argument('-es','--encode_string', help='utf-8 string to encode')
@@ -360,6 +369,7 @@ if __name__ == '__main__':
         for unichars in gen_encode_unichars_from_bytes(bytes):
             string = unicode(''.join(unichars))
             sys.stdout.write(string)        
+        print ""
     elif args['decode']:
         f = codecs.open(args['decode'], "r", encoding='utf-8')
         s = f.read()

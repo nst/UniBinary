@@ -196,13 +196,14 @@ class TestUnidata(unittest.TestCase):
         
         gen = gen_encode_unichars_from_bytes(s)
         
-        u0 = gen.next()
-        u1 = gen.next()
-        
+        (u0, u1) = gen.next()
+                
         self.assertFalse(list(gen))        
 
-        self.assertEqual(ord(u0), 0x9C38)
-        self.assertEqual(ord(u1), 0x0478)
+        print "%x %x" % (ord(u0), ord(u1))
+
+        self.assertEqual(ord(u0), 0x0478)
+        self.assertEqual(ord(u1), 0x4E03)
         
     def test_ascii_characters_decoding(self):
     
@@ -298,6 +299,26 @@ class TestUnidata(unittest.TestCase):
         n = number_of_left_instances_from_index(l, 0)
         
         self.assertEqual(n, 3)
+
+    def test_empty_string(self):
+    
+        bytes = ""
+        
+        gen = gen_encode_unichars_from_bytes(bytes)
+        
+        self.assertFalse(list(gen))        
+
+    def test_one_char(self):
+    
+        bytes = "a"
+        
+        gen = gen_encode_unichars_from_bytes(bytes)
+        
+        u1 = gen.next()
+
+        self.assertFalse(list(gen))        
+        
+        self.assertEqual(ord(u1), 0x0461)
 
     def test_repeats_2(self):
     

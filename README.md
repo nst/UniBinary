@@ -150,7 +150,7 @@ In case of a text only made out of `N` ASCII 7-bits characters, the worst case i
 
 First look for repetitions (no more than 0xFFF at a time). If no repeat, then try to consume two ASCII chars. If it's not possible, look for three bytes. If less than three bytes are available, encode one byte at a time.
 
-    1. byte B repeated N times | N > 3    ->    U8(B), U12(N)
+    1. byte B repeated N times | N >= 3   ->    U8(B), U12(N)
     2. ASCII characters A1, A2            ->    U12a(A1, A2)
     3. bytes B1, B2, B3                   ->    U12b(B1 << 4 + B2 >> 4), U12b(((B2 & 0xF) << 8) + B3)
     4. byte B                             ->    U8(B)
