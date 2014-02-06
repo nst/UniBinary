@@ -10,7 +10,7 @@ Encodes and decodes data into printable Unichode characters.
 3 arbitrary bytes  -> 2 unicode characters
 [3, 0xFFF] repeats -> 2 unicode characters
 
-The encoded text can be copied / pasted / posted on Twitter and stored as UTF-8 or UTF-16 text files.
+The encoded text can be copied / pasted / posted on Twitter and stored as UTF-8 text files.
 
 http://github.com/nst/UniBinary/
 
@@ -352,8 +352,8 @@ def print_decoded_string(s):
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='UniBinary encodes and decodes data into printable Unicode characters.')
-    parser.add_argument('-e','--encode', help='utf-8 file to encode')
-    parser.add_argument('-d','--decode', help='utf-8 file to decode')
+    parser.add_argument('-e','--encode', help='file to encode')
+    parser.add_argument('-d','--decode', help='file to decode')
     parser.add_argument('-es','--encode_string', help='utf-8 string to encode')
     parser.add_argument('-ds','--decode_string', help='utf-8 string to decode')
     args = vars(parser.parse_args())

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>3F27F61D-A4BB-473B-AD19-AAB4617EA8C6</string>
+	<key>IDESourceControlProjectName</key>
+	<string>unibinary</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>88D749B0-2DE6-49D3-B7FD-DE2AD7DF2BAC</key>
+		<string>https://github.com/nst/UniBinary.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>c/unibinary.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>88D749B0-2DE6-49D3-B7FD-DE2AD7DF2BAC</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/nst/UniBinary.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>88D749B0-2DE6-49D3-B7FD-DE2AD7DF2BAC</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>88D749B0-2DE6-49D3-B7FD-DE2AD7DF2BAC</string>
+			<key>IDESourceControlWCCName</key>
+			<string>UniBinary</string>
+		</dict>
+	</array>
+</dict>
+</plist>
