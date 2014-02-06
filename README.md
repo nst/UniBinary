@@ -90,6 +90,16 @@ Encode stdin and decode the output:
 	$ echo "test" | unibinary -e | unibinary -d
 	test
 
+API (`unibinary.h`)
+
+	// encode
+	int unibinary_encode(FILE *fd_in, FILE *fd_out, size_t wrap_length);
+	int unibinary_encode_string(const char* src, wchar_t **dst, size_t wrap_length);
+
+	// decode
+	int unibinary_decode(FILE *src, FILE *dst);
+	int unibinary_decode_string(const wchar_t *src, char **dst, long *dst_len);
+
 Encoding and decoding are efficient and time (worst case) is linear with input size.
 	
 In the following example, 10 times the data take 10 times more time to encode or decode.
