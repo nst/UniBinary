@@ -369,13 +369,20 @@ if __name__ == '__main__':
         for unichars in gen_encode_unichars_from_bytes(bytes):
             string = unicode(''.join(unichars))
             sys.stdout.write(string)        
-        print ""
+        
+        sys.stdout.flush()
+        sys.stderr.write('\n')
+        
     elif args['decode']:
         f = codecs.open(args['decode'], "r", encoding='utf-8')
         s = f.read()
         f.close()
 
         print_decoded_string(s)
+        
+        sys.stdout.flush()
+        sys.stderr.write('\n')
+
     elif args['encode_string']:
         UTF8Writer = codecs.getwriter('utf-8')
         sys.stdout = UTF8Writer(sys.stdout)
@@ -383,9 +390,15 @@ if __name__ == '__main__':
         for unichars in gen_encode_unichars_from_bytes(args['encode_string']):
             string = unicode(''.join(unichars))
             sys.stdout.write(string)
-        print ""
+
+        sys.stdout.flush()
+        sys.stderr.write('\n')
+
     elif args['decode_string']:
         print_decoded_string(args['decode_string'].decode('utf-8'))
-        print ""
+
+        sys.stdout.flush()
+        sys.stderr.write('\n')
+
     else:
         parser.print_help()
