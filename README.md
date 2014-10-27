@@ -208,7 +208,7 @@ When UniBinary meets 2 ASCII 7-bits characters `a1` and `a2`, it encodes them in
     U12a_1_0    [ \u7E00, ..., \u7E00 + 0x1000 [     for a1 >= 64 and a2 <  64
     U12a_1_1    [ \u8E00, ..., \u8E00 + 0x1000 [     for a1 >= 64 and a2 >= 64
 
-So, we can pack 2 * 6 bits in a `U12a` Unicode character. We use four different ranges to replace the 7th (MSB) missing bit. We use `U12a_1_0` and `U12a_1_0` to add 64 to `a1`, and `U12a_0_1` and `U12a_1_1` to add 64 to `a2`. As a result, we can store any tuple of 2 ASCII 7-bits characters in a single Unicode character.
+So, we can pack 2 * 6 bits in a `U12a` Unicode character. We use four different ranges to replace the 7th (MSB) missing bit. We use `U12a_1_0` and `U12a_1_1` to add 64 to `a1`, and `U12a_0_1` and `U12a_1_1` to add 64 to `a2`. As a result, we can store any tuple of 2 ASCII 7-bits characters in a single Unicode character.
 
 #### 4. Run Length Encoding 
 
