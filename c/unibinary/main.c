@@ -51,7 +51,10 @@ int main(int argc, char * const argv[]) {
     //    $ echo test | ./unibinary -e | ./unibinary -d
     //    test
 
-    setlocale(LC_CTYPE, "UTF-8");
+    char *old_locale = setlocale(LC_ALL, NULL);
+    char *saved_locale = strdup(old_locale);
+    if(saved_locale == NULL) return EXIT_FAILURE;
+    
     setlocale(LC_CTYPE, "");
     
     static const char *opt_string = "eds:f:b:h";
@@ -76,7 +79,7 @@ int main(int argc, char * const argv[]) {
                 break;
 //            case 'h':
 //                display_usage();
-//                return EXIT_SUCCESS;
+//                goto exit_failure;
                 break;
             default:
                 break;
@@ -97,16 +100,16 @@ int main(int argc, char * const argv[]) {
         } else if (global_args.path != NULL) {
             // encode path
             FILE *fd_in = fopen(global_args.path, "rb");
-            if(fd_in == NULL) return EXIT_FAILURE;
+            if(fd_in == NULL) goto exit_failure;
             
             int status = unibinary_encode(fd_in, stdout, global_args.wrap);
             fclose(fd_in);
             
-            if(status != 0) return EXIT_FAILURE;
+            if(status != 0) goto exit_failure;
         } else {
             // encode stdin
             int status = unibinary_encode(stdin, stdout, global_args.wrap);
-            if(status != 0) return EXIT_FAILURE;
+            if(status != 0) goto exit_failure;
         }
     } else if (global_args.decode) {
         // decode
@@ -116,7 +119,7 @@ int main(int argc, char * const argv[]) {
             size_t max_wchar_bytes = strlen(global_args.string) * MB_CUR_MAX;
             wchar_t wcsout[max_wchar_bytes];
             size_t nb_wc = mbstowcs(wcsout, global_args.string, max_wchar_bytes);
-            if(nb_wc == -1) return EXIT_FAILURE;
+            if(nb_wc == -1) goto exit_failure;
             
             char* data;
             long dst_len;
@@ -124,21 +127,21 @@ int main(int argc, char * const argv[]) {
             size_t written = fwrite(data, sizeof(char), dst_len, stdout);
             free(data);
             
-            if(written != dst_len) return EXIT_FAILURE;
+            if(written != dst_len) goto exit_failure;
         
         } else if (global_args.path != NULL) {
             // decode path
             FILE *fd_in = fopen(global_args.path, "rb");
-            if(fd_in == NULL) return EXIT_FAILURE;
+            if(fd_in == NULL) goto exit_failure;
             
             int status = unibinary_decode(fd_in, stdout);
             fclose(fd_in);
             
-            if(status != 0) return EXIT_FAILURE;
+            if(status != 0) goto exit_failure;
         } else {
             // decode stdin
             int status = unibinary_decode(stdin, stdout);
-            if(status != 0) return EXIT_FAILURE;
+            if(status != 0) goto exit_failure;
 
         }
         
@@ -154,5 +157,17 @@ int main(int argc, char * const argv[]) {
         }
     }
     
+    goto exit_success;
+
+exit_success:
+    setlocale(LC_ALL, saved_locale);
+    free(saved_locale);
+    
     return EXIT_SUCCESS;
+
+exit_failure:
+    setlocale(LC_ALL, saved_locale);
+    free(saved_locale);
+    
+    return EXIT_FAILURE;
 }
