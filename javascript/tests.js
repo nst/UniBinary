@@ -1,3 +1,12 @@
+UNIBINARY_UNIT_TESTING=1;
+
+if (typeof require != 'undefined') {
+if (typeof QUnit == 'undefined') QUnit = require('qunit-cli');
+if (typeof unibinary =='undefined') unibinary = require('./unibinary');
+}
+
+QUnit.module("unibinary");
+
 QUnit.test("test_unichr_12_encoding_decoding", function (assert) {
 
     var testArray = [0x0, 0x1, 0xAB, 0x123, 0xABC, 0xF, 0xFF, 0xFFF];

@@ -403,7 +403,9 @@
 
         var resultArray = gen_decode_bytes_from_string(encoded);
 
-        var encodedString = String.fromCharCode.apply(null, resultArray);
+        var encodedString = "";
+        
+	for(var i=0;i<resultArray.length;i++) encodedString+=String.fromCharCode(resultArray[i]);
 
         return decodeURIComponent(escape(encodedString));
 
@@ -443,7 +445,7 @@
 
     }
 
-    if (typeof QUnit == 'undefined') {
+    if (typeof UNIBINARY_UNIT_TESTING == 'undefined') {
 
 	    return {
 	        encode: gen_encode_unichars_from_bytes,
