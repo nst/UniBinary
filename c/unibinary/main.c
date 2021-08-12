@@ -12,6 +12,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <unistd.h>
+#include <stdio.h>
 
 int display_usage() {
     printf("Usage: unibinary [-ed] [-sf] [-b num] [-h]\n");
