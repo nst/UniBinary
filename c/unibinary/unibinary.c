@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <stdio.h>
 
 // encodes ascii 7-bits characters
 wchar_t U12a_0_0_start = 0x5E00; // CJK Unified Ideographs (subset) - encodes 12 bits (2 ascii) - MSB 0,0

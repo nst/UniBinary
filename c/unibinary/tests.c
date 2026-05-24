@@ -12,6 +12,7 @@
 #include <string.h>
 #include <assert.h>
 #include <locale.h>
+#include <stdio.h>
 
 int number_of_repeated_characters_at_index(const char* src, size_t i, size_t srcSize, int *n);
 int unichr_12a_from_two_ascii(unsigned char c0, unsigned char c1, wchar_t *u0);
