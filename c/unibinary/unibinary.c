@@ -9,7 +9,6 @@
 #include "unibinary.h"
 #include <string.h>
 #include <stdlib.h>
-#include <sys/mman.h>
 
 // encodes ascii 7-bits characters
 wchar_t U12a_0_0_start = 0x5E00; // CJK Unified Ideographs (subset) - encodes 12 bits (2 ascii) - MSB 0,0
@@ -38,8 +37,8 @@ int is_in_U12a(wchar_t u) {
             return 1;
         }
     }
-    
-    return EXIT_SUCCESS;
+
+    return 0;
 }
 
 int is_in_U12b(wchar_t u) {
@@ -193,11 +192,11 @@ int repeated_bytes_from_unichars(wchar_t u1, wchar_t u2, uint8_t **dst, size_t *
     if(int_from_u12b(u2, &n) != 0) return EXIT_FAILURE;
     
     if(n > 0xFFF) {
-        fprintf(stderr, "-- bad number of repeats: 0x%x\n", n);
+        fprintf(stderr, "-- bad number of repeats: 0x%x\n", (unsigned int)n);
         return EXIT_FAILURE;
     }
-    
-    uint8_t *out = malloc(n * sizeof(uint8_t));
+
+    uint8_t *out = malloc(n > 0 ? n * sizeof(uint8_t) : 1);
     if(out == NULL) {
         return EXIT_FAILURE;
     }
@@ -268,7 +267,11 @@ int bytes_from_u1_u2(wchar_t u1, wchar_t u2, uint8_t **buffer, size_t *bufferSiz
         uint8_t b0, b1, b2;
         
         int status = three_bytes_from_unichars(u1, u2, &b0, &b1, &b2);
-        if(status != 0) return EXIT_FAILURE;
+        if(status != 0) {
+            free(*buffer);
+            *buffer = NULL;
+            return EXIT_FAILURE;
+        }
         
         *(*buffer+0) = b0;
         *(*buffer+1) = b1;
@@ -325,6 +328,8 @@ int bytes_from_u1_u2(wchar_t u1, wchar_t u2, uint8_t **buffer, size_t *bufferSiz
         int success = int_from_u08b(u1, &b0);
         if(success == EXIT_FAILURE) {
             fprintf(stderr, "-- error\n");
+            free(*buffer);
+            *buffer = NULL;
             return EXIT_FAILURE;
         }
         
@@ -332,7 +337,7 @@ int bytes_from_u1_u2(wchar_t u1, wchar_t u2, uint8_t **buffer, size_t *bufferSiz
         return EXIT_SUCCESS;
     }
     
-    fprintf(stderr, "-- bytes_from_u1_u2() cannot deal with u1:0x%x u2:0x%x\n", u1, u2);
+    fprintf(stderr, "-- bytes_from_u1_u2() cannot deal with u1:0x%x u2:0x%x\n", (unsigned int)u1, (unsigned int)u2);
     fprintf(stderr, "   u1 in U8b:%d U12b:%d, u2 in U8b:%d U12b:%d\n", u1_in_U8b, u1_in_U12b, u2_in_U8b, u2_in_U12b);
     return EXIT_FAILURE;
 }
@@ -387,21 +392,23 @@ int unibinary_decode(FILE *src, FILE *dst) {
             wchar_t u1 = c;
             wchar_t u2 = c_next;
             
-            uint8_t *outBuffer;
-            size_t outBufferSize;
-            
+            uint8_t *outBuffer = NULL;
+            size_t outBufferSize = 0;
+
             int error = bytes_from_u1_u2(u1, u2, &outBuffer, &outBufferSize);
             if(error != 0) {
                 fprintf(stderr, "-- error in bytes_from_u1_u2()\n");
                 return EXIT_FAILURE;
             }
-            
+
             if(outBuffer == NULL) {
                 fprintf(stderr, "-- outBuffer == NULL\n");
+                return EXIT_FAILURE;
             }
-            
+
             fwrite(outBuffer, 1, outBufferSize, dst);
-            
+            free(outBuffer);
+
             i += 2;
             
             fwd_chars_read -= 2;
@@ -452,12 +459,14 @@ int put_wc(FILE *fd_out, wchar_t wc, size_t *count, size_t wrap_length) {
 }
 
 int unibinary_encode_string(const char *src, wchar_t **dst, size_t wrap_length) {
-    
+
+    *dst = NULL;
+
     // 1. write src into a temporary file
-    
+
     FILE *fd_in = tmpfile();
     if(fd_in == NULL) return EXIT_FAILURE;
-    
+
     size_t src_len = strlen(src);
     size_t written = fwrite(src, 1, src_len, fd_in);
     if(written != src_len) {
@@ -465,7 +474,7 @@ int unibinary_encode_string(const char *src, wchar_t **dst, size_t wrap_length) 
         return EXIT_FAILURE;
     }
     rewind(fd_in);
-    
+
     // 2. open another temporary file to write the encoded string
 
     FILE *fd_out = tmpfile();
@@ -476,41 +485,49 @@ int unibinary_encode_string(const char *src, wchar_t **dst, size_t wrap_length) 
 
     int status = unibinary_encode(fd_in, fd_out, wrap_length);
     fclose(fd_in);
-    
-    if(status != 0) return EXIT_FAILURE;
-    
-    // 3. read the encoded string and fill *dst
 
-    fflush(fd_out);
-    long file_size = ftell(fd_out);
-
-    rewind(fd_out);
-
-    long max_wchar_bytes_possible = file_size * MB_CUR_MAX;
-
-    if(max_wchar_bytes_possible > INTMAX_MAX) {
+    if(status != 0) {
         fclose(fd_out);
         return EXIT_FAILURE;
     }
 
-    char *map = mmap(0, file_size, PROT_READ, MAP_SHARED, fileno(fd_out), 0);
+    // 3. read the encoded string and fill *dst
 
-    fclose(fd_out);
-
-    if(map == MAP_FAILED) {
+    fflush(fd_out);
+    long file_size = ftell(fd_out);
+    if(file_size < 0) {
+        fclose(fd_out);
         return EXIT_FAILURE;
     }
+
+    rewind(fd_out);
+
+    char *buffer = (char *)malloc((size_t)file_size + 1);
+    if(buffer == NULL) {
+        fprintf(stderr, "-- malloc error\n");
+        fclose(fd_out);
+        return EXIT_FAILURE;
+    }
+
+    size_t read = fread(buffer, 1, (size_t)file_size, fd_out);
+    fclose(fd_out);
+
+    if(read != (size_t)file_size) {
+        free(buffer);
+        return EXIT_FAILURE;
+    }
+    buffer[file_size] = '\0';
 
     size_t max_wchars = (size_t)file_size + 1;
     *dst = (wchar_t *)malloc(max_wchars * sizeof(wchar_t));
     if(*dst == NULL) {
         fprintf(stderr, "-- malloc error\n");
-        munmap(map, file_size);
+        free(buffer);
         return EXIT_FAILURE;
     }
 
-    size_t length = mbstowcs(*dst, map, max_wchars);
-    munmap(map, file_size);
+    size_t length = mbstowcs(*dst, buffer, max_wchars);
+    free(buffer);
 
     if(length == (size_t)-1) {
         free(*dst);
@@ -522,20 +539,23 @@ int unibinary_encode_string(const char *src, wchar_t **dst, size_t wrap_length) 
 }
 
 int unibinary_decode_string(const wchar_t *src, char **dst, long *dst_len) {
-    
+
+    *dst = NULL;
+    *dst_len = 0;
+
     // 1. write src into a temporary file
-    
+
     FILE *fd_in = tmpfile();
     if(fd_in == NULL) return EXIT_FAILURE;
-    
+
     int status = fputws(src, fd_in);
     if(status < 0) {
         fclose(fd_in);
         return EXIT_FAILURE;
     }
-    
+
     rewind(fd_in);
-    
+
     // 2. open another temporary file to write decoded data
 
     FILE *fd_out = tmpfile();
@@ -546,32 +566,41 @@ int unibinary_decode_string(const wchar_t *src, char **dst, long *dst_len) {
 
     int status2 = unibinary_decode(fd_in, fd_out);
     fclose(fd_in);
-    
-    if(status2 != 0) return EXIT_FAILURE;
-    
+
+    if(status2 != 0) {
+        fclose(fd_out);
+        return EXIT_FAILURE;
+    }
+
     // 3. read the resulting string and fill **dst
 
     fflush(fd_out);
     long file_size = ftell(fd_out);
-
-    *dst_len = file_size;
+    if(file_size < 0) {
+        fclose(fd_out);
+        return EXIT_FAILURE;
+    }
 
     rewind(fd_out);
 
-    *dst = (char *)malloc(file_size * sizeof(char));
+    *dst = (char *)malloc(file_size > 0 ? (size_t)file_size : 1);
     if(*dst == NULL) {
         fprintf(stderr, "-- malloc error\n");
         fclose(fd_out);
         return EXIT_FAILURE;
     }
-    
-    size_t read = fread(*dst, sizeof(char), file_size, fd_out);
+
+    size_t read = fread(*dst, sizeof(char), (size_t)file_size, fd_out);
     fclose(fd_out);
 
-    if(read != file_size) {
+    if(read != (size_t)file_size) {
+        free(*dst);
+        *dst = NULL;
         return EXIT_FAILURE;
     }
-    
+
+    *dst_len = file_size;
+
     return EXIT_SUCCESS;
 }
 

@@ -94,8 +94,9 @@ int main(int argc, char * const argv[]) {
         if(global_args.string != NULL) {
             // encode string
             wchar_t *wcs;
-            unibinary_encode_string(global_args.string, &wcs, global_args.wrap);
-            fwprintf(stdout, wcs);
+            int status = unibinary_encode_string(global_args.string, &wcs, global_args.wrap);
+            if(status != 0) goto exit_failure;
+            fputws(wcs, stdout);
             free(wcs);
         } else if (global_args.path != NULL) {
             // encode path
@@ -116,18 +117,19 @@ int main(int argc, char * const argv[]) {
         
         if(global_args.string != NULL) {
             // decode string
-            size_t max_wchar_bytes = strlen(global_args.string) * MB_CUR_MAX;
-            wchar_t wcsout[max_wchar_bytes];
-            size_t nb_wc = mbstowcs(wcsout, global_args.string, max_wchar_bytes);
-            if(nb_wc == -1) goto exit_failure;
+            size_t max_wchars = strlen(global_args.string) + 1;
+            wchar_t wcsout[max_wchars];
+            size_t nb_wc = mbstowcs(wcsout, global_args.string, max_wchars);
+            if(nb_wc == (size_t)-1) goto exit_failure;
             
             char* data;
             long dst_len;
-            unibinary_decode_string(wcsout, &data, &dst_len);
+            int status = unibinary_decode_string(wcsout, &data, &dst_len);
+            if(status != 0) goto exit_failure;
             size_t written = fwrite(data, sizeof(char), dst_len, stdout);
             free(data);
-            
-            if(written != dst_len) goto exit_failure;
+
+            if(written != (size_t)dst_len) goto exit_failure;
         
         } else if (global_args.path != NULL) {
             // decode path
